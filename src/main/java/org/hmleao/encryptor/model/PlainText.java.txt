@@ -1,0 +1,23 @@
+package org.hmleao.encryptor.model;
+
+public class PlainText implements EncryptableMessage {
+    private String content;
+
+    public PlainText(String content) {
+        this.content = content;
+    }
+
+    @Override
+    public String getContent() {
+        return content;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Mensagem Original";
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+}

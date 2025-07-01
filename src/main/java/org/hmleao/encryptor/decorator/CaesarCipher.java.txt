@@ -1,0 +1,32 @@
+package org.hmleao.encryptor.decorator;
+
+import org.hmleao.encryptor.model.EncryptableMessage;
+
+public class CaesarCipher extends CipherDecorator {
+    private int shift;
+
+    public CaesarCipher(EncryptableMessage encryptableMessage, int shift) {
+        super(encryptableMessage);
+        this.shift = shift;
+    }
+
+    @Override
+    public String getContent() {
+        String originalContent = encryptableMessage.getContent();
+        StringBuilder encryptedContent = new StringBuilder();
+
+        for (char character : originalContent.toCharArray()) {
+            if (Character.isLetter(character)) {
+                char base = Character.isLowerCase(character) ? 'a' : 'A';
+                character = (char) (base + (character - base + shift) % 26);
+            }
+            encryptedContent.append(character);
+        }
+        return encryptedContent.toString();
+    }
+
+    @Override
+    public String getDescription() {
+        return encryptableMessage.getDescription() + ", Cifra de César (deslocamento: " + shift + ")";
+    }
+}

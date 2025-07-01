@@ -1,0 +1,53 @@
+package org.hmleao.encryptor.decorator;
+
+import org.hmleao.encryptor.model.EncryptableMessage;
+
+public class RailFenceCipher extends CipherDecorator {
+    private int rails;
+
+    public RailFenceCipher(EncryptableMessage encryptableMessage, int rails) {
+        super(encryptableMessage);
+        if (rails <= 1) {
+            throw new IllegalArgumentException("O número de trilhos para a Cifra de Cerca Ferroviária deve ser maior que 1.");
+        }
+        this.rails = rails;
+    }
+
+    @Override
+    public String getContent() {
+        String originalContent = encryptableMessage.getContent();
+        int n = originalContent.length();
+        StringBuilder[] result = new StringBuilder[rails];
+        for (int i = 0; i < rails; i++) {
+            result[i] = new StringBuilder();
+        }
+
+        int row = 0;
+        boolean down = true;
+
+        for (int i = 0; i < n; i++) {
+            result[row].append(originalContent.charAt(i));
+            if (down) {
+                row++;
+            } else {
+                row--;
+            }
+            if (row == rails - 1) {
+                down = false;
+            } else if (row == 0) {
+                down = true;
+            }
+        }
+
+        StringBuilder encryptedContent = new StringBuilder();
+        for (int i = 0; i < rails; i++) {
+            encryptedContent.append(result[i]);
+        }
+        return encryptedContent.toString();
+    }
+
+    @Override
+    public String getDescription() {
+        return encryptableMessage.getDescription() + ", Cifra de Cerca Ferroviária (trilhos: " + rails + ")";
+    }
+}

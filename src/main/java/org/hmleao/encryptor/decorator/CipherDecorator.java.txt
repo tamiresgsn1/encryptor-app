@@ -1,0 +1,16 @@
+package org.hmleao.encryptor.decorator;
+
+import org.hmleao.encryptor.model.EncryptableMessage;
+
+public abstract class CipherDecorator implements EncryptableMessage {
+    protected EncryptableMessage encryptableMessage;
+
+    public CipherDecorator(EncryptableMessage encryptableMessage) {
+        this.encryptableMessage = encryptableMessage;
+    }
+
+    @Override
+    public abstract String getContent();
+    @Override
+    public abstract String getDescription();
+}

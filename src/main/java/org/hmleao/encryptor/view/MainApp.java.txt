@@ -1,0 +1,178 @@
+package org.hmleao.encryptor.view;
+
+import org.hmleao.encryptor.decorator.CaesarCipher;
+import org.hmleao.encryptor.decorator.RailFenceCipher;
+import org.hmleao.encryptor.model.EncryptableMessage;
+import org.hmleao.encryptor.model.PlainText;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.BiFunction;
+
+public class MainApp extends JFrame {
+    private JTextArea originalTextArea;
+    private JTextArea encryptedTextArea;
+    private JPanel algorithmSelectionPanel;
+    private JButton addCaesarButton;
+    private JButton addRailFenceButton;
+    private JButton encryptButton;
+    private JButton resetButton;
+
+    private List<AlgorithmConfig> selectedAlgorithms;
+
+    public MainApp() {
+        super("Criptografia Dinâmica com Decorator");
+        setSize(800, 600);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new BorderLayout(10, 10)); // Espaçamento entre os painéis
+
+        selectedAlgorithms = new ArrayList<>();
+
+        // Painel Superior para a Mensagem Original
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBorder(BorderFactory.createTitledBorder("Mensagem Original"));
+        originalTextArea = new JTextArea(5, 40);
+        originalTextArea.setLineWrap(true);
+        originalTextArea.setWrapStyleWord(true);
+        JScrollPane originalScrollPane = new JScrollPane(originalTextArea);
+        topPanel.add(originalScrollPane, BorderLayout.CENTER);
+        add(topPanel, BorderLayout.NORTH);
+
+        // Painel Central para Seleção de Algoritmos
+        algorithmSelectionPanel = new JPanel();
+        algorithmSelectionPanel.setLayout(new BoxLayout(algorithmSelectionPanel, BoxLayout.PAGE_AXIS));
+        algorithmSelectionPanel.setBorder(BorderFactory.createTitledBorder("Algoritmos Selecionados (Ordem de Aplicação)"));
+        JScrollPane algorithmScrollPane = new JScrollPane(algorithmSelectionPanel);
+        add(algorithmScrollPane, BorderLayout.CENTER);
+
+        // Painel de Botões para Adicionar Algoritmos
+        JPanel addButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        addCaesarButton = new JButton("Adicionar Cifra de César");
+        addRailFenceButton = new JButton("Adicionar Cifra de Cerca Ferroviária");
+        addButtonPanel.add(addCaesarButton);
+        addButtonPanel.add(addRailFenceButton);
+        add(addButtonPanel, BorderLayout.WEST); // Colocado à esquerda para melhor organização
+
+        // Painel Inferior para Mensagem Cifrada e Botões de Ação
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.setBorder(BorderFactory.createTitledBorder("Resultado da Cifragem"));
+        encryptedTextArea = new JTextArea(8, 40); // Aumentado o tamanho para melhor visualização do resultado
+        encryptedTextArea.setEditable(false);
+        encryptedTextArea.setLineWrap(true);
+        encryptedTextArea.setWrapStyleWord(true);
+        JScrollPane encryptedScrollPane = new JScrollPane(encryptedTextArea);
+        bottomPanel.add(encryptedScrollPane, BorderLayout.CENTER);
+
+        JPanel actionButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        encryptButton = new JButton("Cifrar Mensagem");
+        resetButton = new JButton("Resetar Algoritmos");
+        actionButtonPanel.add(encryptButton);
+        actionButtonPanel.add(resetButton);
+        bottomPanel.add(actionButtonPanel, BorderLayout.SOUTH);
+        add(bottomPanel, BorderLayout.SOUTH);
+
+        // Adicionar Listeners aos Botões
+        addCaesarButton.addActionListener(e -> addAlgorithmPanel("Cifra de César", CaesarCipher::new, "Deslocamento:", JTextField::new));
+        addRailFenceButton.addActionListener(e -> addAlgorithmPanel("Cifra de Cerca Ferroviária", RailFenceCipher::new, "Trilhos:", JTextField::new));
+        encryptButton.addActionListener(new EncryptButtonListener());
+        resetButton.addActionListener(e -> {
+            selectedAlgorithms.clear();
+            algorithmSelectionPanel.removeAll();
+            algorithmSelectionPanel.revalidate();
+            algorithmSelectionPanel.repaint();
+            encryptedTextArea.setText("");
+        });
+
+        setVisible(true);
+    }
+
+    private void addAlgorithmPanel(String algoName, BiFunction<EncryptableMessage, Integer, CipherDecorator> constructor, String paramLabel, java.util.function.Supplier<JTextField> paramFieldSupplier) {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+        panel.setBorder(BorderFactory.createEtchedBorder());
+        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, panel.getPreferredSize().height)); // Para o BoxLayout funcionar melhor
+
+        JLabel nameLabel = new JLabel(algoName);
+        panel.add(nameLabel);
+
+        JLabel paramLbl = new JLabel(paramLabel);
+        panel.add(paramLbl);
+
+        JTextField paramField = paramFieldSupplier.get();
+        paramField.setColumns(5); // Tamanho do campo de texto
+        panel.add(paramField);
+
+        JButton removeButton = new JButton("Remover");
+        panel.add(removeButton);
+
+        AlgorithmConfig config = new AlgorithmConfig(algoName, constructor, paramField, panel);
+        selectedAlgorithms.add(config);
+
+        removeButton.addActionListener(e -> {
+            selectedAlgorithms.remove(config);
+            algorithmSelectionPanel.remove(panel);
+            algorithmSelectionPanel.revalidate();
+            algorithmSelectionPanel.repaint();
+        });
+
+        algorithmSelectionPanel.add(panel);
+        algorithmSelectionPanel.revalidate();
+        algorithmSelectionPanel.repaint();
+    }
+
+    private class EncryptButtonListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String originalText = originalTextArea.getText();
+            if (originalText.trim().isEmpty()) {
+                JOptionPane.showMessageDialog(MainApp.this,
+                        "Por favor, insira a mensagem original para cifrar.",
+                        "Mensagem Vazia",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            EncryptableMessage currentMessage = new PlainText(originalText);
+
+            try {
+                for (AlgorithmConfig config : selectedAlgorithms) {
+                    int param = Integer.parseInt(config.paramField.getText());
+                    currentMessage = config.constructor.apply(currentMessage, param);
+                }
+                encryptedTextArea.setText("Descrição dos Algoritmos: " + currentMessage.getDescription() + "\n\n" +
+                                          "Mensagem Cifrada Final: " + currentMessage.getContent());
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(MainApp.this,
+                        "Erro: Por favor, insira um valor numérico válido para os parâmetros dos algoritmos (ex: 3 para César, 2 para Cerca Ferroviária).",
+                        "Erro de Parâmetro",
+                        JOptionPane.ERROR_MESSAGE);
+            } catch (IllegalArgumentException ex) {
+                 JOptionPane.showMessageDialog(MainApp.this,
+                        "Erro no Algoritmo: " + ex.getMessage(),
+                        "Erro de Algoritmo",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private static class AlgorithmConfig {
+        String name;
+        BiFunction<EncryptableMessage, Integer, CipherDecorator> constructor;
+        JTextField paramField;
+        JPanel panel;
+
+        public AlgorithmConfig(String name, BiFunction<EncryptableMessage, Integer, CipherDecorator> constructor, JTextField paramField, JPanel panel) {
+            this.name = name;
+            this.constructor = constructor;
+            this.paramField = paramField;
+            this.panel = panel;
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(MainApp::new);
+    }
+}

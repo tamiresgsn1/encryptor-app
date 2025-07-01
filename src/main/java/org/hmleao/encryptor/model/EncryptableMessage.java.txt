@@ -1,0 +1,6 @@
+package org.hmleao.encryptor.model;
+
+public interface EncryptableMessage {
+    String getContent();
+    String getDescription();
+}

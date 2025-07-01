@@ -1,4 +1,4 @@
-package org.hmleao.encryptor.decorator;
+package org.myproject.encryptor;
 
 import org.hmleao.encryptor.model.EncryptableMessage;
 

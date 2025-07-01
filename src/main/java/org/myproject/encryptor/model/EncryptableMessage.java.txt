@@ -1,4 +1,4 @@
-package org.hmleao.encryptor.model;
+package org.myproject.encryptor;
 
 public interface EncryptableMessage {
     String getContent();

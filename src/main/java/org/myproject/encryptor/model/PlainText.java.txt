@@ -1,4 +1,4 @@
-package org.hmleao.encryptor.model;
+package org.myproject.encryptor;
 
 public class PlainText implements EncryptableMessage {
     private String content;

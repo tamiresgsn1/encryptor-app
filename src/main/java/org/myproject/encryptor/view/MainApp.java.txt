@@ -1,4 +1,4 @@
-package org.hmleao.encryptor.view;
+package org.myproject.encryptor;
 
 import org.hmleao.encryptor.decorator.CaesarCipher;
 import org.hmleao.encryptor.decorator.RailFenceCipher;
